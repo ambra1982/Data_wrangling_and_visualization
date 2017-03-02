@@ -1,0 +1,65 @@
+---
+title: "Tidying Data W5"
+author: "Ambra"
+date: "March 2, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Airlines-data wrangling and visualization}
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+###Create airline dataframe
+airdata<-data.frame(Airline=c("ALASKA", "ALASKA"," ", "AMWEST", "AMWEST"), Status=c("on time", "delayed"," ", "on time", "delayed"),Los_Angeles= c(497, 62, " ", 694,117),Phoenix= c(221,12," ", 4840, 415),San_Diego=c(212, 20," ", 383, 65),San_Francisco= c(503, 102," ", 320, 129),Seattle= c(1841, 305, " ", 201, 61))
+
+write.csv(airdata, file="C:/Users/ambra/Desktop/Data 607/W5/table.csv")
+
+airdf<-read.csv("C:/Users/ambra/Desktop/Data 607/W5/table.csv")
+
+airdf
+
+##The column names above are in reality values- gather the table using TIDYR
+
+airdf2 <- airdf %>% drop_na() %>% gather("Airport", "n", 4:8)
+
+
+###group_by, add new variable which shows ratio of flights by airline, filter by status "delayed" and summarise to compare total delays and their relative frequency between airlines
+
+delays<- airdf2 %>% group_by(Airline) %>% 
+mutate(ratio= n/sum(n)) %>% 
+filter(Status=="delayed") %>%   
+summarise(total_delays=sum(n), freq_delays=round(sum(ratio),2)) 
+
+##Plot percentage of delays by airline in ggplot2
+
+ggplot(delays, aes(x=Airline, y=freq_delays, fill=Airline))+
+geom_bar(stat='identity', position=position_dodge())+
+ggtitle("Percentage of Delayed Flights by Airline") +
+xlab("Airline") + ylab("Percentage of Delays") +
+geom_text(aes(label= paste(round(freq_delays*100,0),"%",sep="")))
+
+##percentage of flights delayed by airport and airline
+
+airportdelays<- airdf2 %>% group_by(Airport, Airline) %>% 
+mutate(ratio= n/sum(n)) %>% 
+filter(Status=="delayed") %>%   
+summarise(total_delays=sum(n), freq_delays=round(sum(ratio),2)) 
+
+##Plot percentage of delayed flight by airport and airline
+ggplot(airportdelays, aes(x=Airport, y=freq_delays, fill=Airline)) +
+geom_bar(stat="identity", position=position_dodge()) +
+geom_text(aes(label=paste(round(freq_delays*100,0),"%",sep="")), position= position_dodge(width = 1))+
+ggtitle("Percentage of Delayed Flights by Airport and Airline") +
+xlab("Airport") + ylab("Percentage of Delayed Flights")
+
+
+```
+
+
+
